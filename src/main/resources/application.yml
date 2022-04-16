@@ -1,7 +1,9 @@
 spring:
   datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://121.37.194.21:3306/small_tools?serverTimeZone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
-    password: Root@2022
-    url: jdbc:mysql://121.37.194.21:3306/springboot?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
-    driver-class-name: com.mysql.jdbc.Driver
-
+    password: Wen..123
+mybatis:
+  mapper-locations: classpath:mybatis/*Mapper.xml
