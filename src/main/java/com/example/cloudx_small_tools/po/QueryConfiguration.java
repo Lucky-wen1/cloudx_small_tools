@@ -3,7 +3,7 @@ package com.example.cloudx_small_tools.po;
 import java.io.Serializable;
 
 /**
- * @Description: 查询配置表
+ * @Description: 查询字段配置
  * @author: 10191
  * @date:2022/4/16 17:23
  **/
@@ -14,6 +14,8 @@ public class QueryConfiguration implements Serializable {
     private String query_table;
     private String query_field;
     private String field_comment;
+    private Long num_id;
+    private Long relation_id;
 
     public Long getId() {
         return id;
@@ -45,5 +47,21 @@ public class QueryConfiguration implements Serializable {
 
     public void setField_comment(String field_comment) {
         this.field_comment = field_comment;
+    }
+
+    public Long getNum_id() {
+        return num_id;
+    }
+
+    public void setNum_id(Long num_id) {
+        this.num_id = num_id;
+    }
+
+    public Long getRelation_id() {
+        return relation_id;
+    }
+
+    public void setRelation_id(Long relation_id) {
+        this.relation_id = relation_id;
     }
 }
