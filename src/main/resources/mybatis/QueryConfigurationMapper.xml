@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.cloudx_small_tools.mapper.QueryConfigurationMapper">
+
+    <sql id="Base_Column_List">
+        id,
+        query_table,
+        query_field,
+        field_comment,
+        num_id,
+        relation_id
+    </sql>
+
+    <select id="getQueryConfigById" resultType="com.example.cloudx_small_tools.po.QueryConfiguration">
+        select
+            <include refid="Base_Column_List" />
+        from query_configuration where id = #{id};
+    </select>
+
+    <select id="getQueryConfigByIds" resultType="com.example.cloudx_small_tools.po.QueryConfiguration">
+        select
+        <include refid="Base_Column_List" />
+        from query_configuration where id IN
+        <foreach collection="ids" separator="," open="(" close=")" item="id">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="getQueryConfigByTable" resultType="com.example.cloudx_small_tools.po.QueryConfiguration">
+        select
+            <include refid="Base_Column_List" />
+        from query_configuration where query_table = #{queryTable};
+    </select>
+</mapper>

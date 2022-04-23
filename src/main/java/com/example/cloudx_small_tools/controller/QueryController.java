@@ -1,6 +1,4 @@
 package com.example.cloudx_small_tools.controller;
-import com.alibaba.fastjson.JSON;
-import com.example.cloudx_small_tools.po.QueryConfiguration;
 import com.example.cloudx_small_tools.service.QuerySqlService;
 import com.example.cloudx_small_tools.vo.QueryVO;
 import com.example.cloudx_small_tools.vo.WhereVO;
@@ -27,15 +25,6 @@ public class QueryController {
 
     @Autowired
     private QuerySqlService querySqlService;
-
-    @RequestMapping("/getTableConfig")
-    public String getTableConfig(){
-        String queryTable = "scm_sys_trade";
-        List<QueryConfiguration> tableQueryConfiguration = querySqlService.getTableQueryConfiguration(queryTable);
-        String tableConfigList = JSON.toJSONString(tableQueryConfiguration);
-        logger.info("获取配置表数据==> queryTable:{}, response:{}", queryTable, tableConfigList);
-        return tableConfigList;
-    }
 
     @RequestMapping("/getQuerySql")
     public String getQuerySql(){
