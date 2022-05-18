@@ -1,3 +1,9 @@
+# 配置
+server:
+  port: 8082
+  servlet:
+    context-path: /
+
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
@@ -5,5 +11,11 @@ spring:
     url: jdbc:mysql://121.37.194.21:3306/small_tools?serverTimeZone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
     password: Wen..123
+
+  mvc:
+    view:
+      prefix: /WEB-INF/  # /默认代表根目录 src/main/webapp
+      suffix: .
+
 mybatis:
   mapper-locations: classpath:mybatis/*Mapper.xml

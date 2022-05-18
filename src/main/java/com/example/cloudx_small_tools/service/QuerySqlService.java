@@ -1,5 +1,6 @@
 package com.example.cloudx_small_tools.service;
 import com.example.cloudx_small_tools.po.QueryConfiguration;
+import com.example.cloudx_small_tools.po.QueryRelation;
 import com.example.cloudx_small_tools.vo.QueryVO;
 
 import java.util.List;
@@ -13,10 +14,24 @@ public interface QuerySqlService {
 
     /**
      * 查询SQL生成
-     * @param queryVO
+     * @param queryVOList
      * @return
      */
-    String getQuerySql(QueryVO queryVO);
+    String getQuerySql(List<QueryVO> queryVOList);
+
+    /**
+     * 根据表查询字段配置信息
+     * @param table
+     * @return
+     */
+    List<QueryConfiguration> getQueryConfig(String table);
+
+    /**
+     * 根据表查询表关联信息
+     * @param table
+     * @return
+     */
+    List<QueryRelation> getQueryRelation(String table);
 }
 
 

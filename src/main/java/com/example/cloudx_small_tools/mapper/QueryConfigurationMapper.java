@@ -14,7 +14,7 @@ import java.util.List;
 @Mapper
 public interface QueryConfigurationMapper {
 
-    List<QueryConfiguration> getQueryConfigById(@Param("id") Long id);
+    QueryConfiguration getQueryConfigById(@Param("id") Long id);
 
     List<QueryConfiguration> getQueryConfigByIds(@Param("ids") List<Long> ids);
 

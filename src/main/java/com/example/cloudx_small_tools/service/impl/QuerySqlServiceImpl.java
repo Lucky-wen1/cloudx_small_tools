@@ -1,6 +1,5 @@
 package com.example.cloudx_small_tools.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.example.cloudx_small_tools.mapper.QueryConfigurationMapper;
 import com.example.cloudx_small_tools.mapper.QueryNumMapper;
 import com.example.cloudx_small_tools.mapper.QueryRelationMapper;
@@ -16,7 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,34 +33,54 @@ public class QuerySqlServiceImpl implements QuerySqlService {
     private static final Logger logger = LoggerFactory.getLogger(QuerySqlServiceImpl.class);
 
     @Autowired
-    private QueryConfigurationMapper queryConfigurationMapper;
-    @Autowired
     private QueryNumMapper queryNumMapper;
+    @Autowired
+    private QueryConfigurationMapper queryConfigurationMapper;
     @Autowired
     private QueryRelationMapper queryRelationMapper;
 
     @Override
-    public String getQuerySql(QueryVO queryVO) {
-        CommonUtil.isNull(queryVO, "查询SQL生成, 入参为空");
-        CommonUtil.isNull(queryVO.getConfigIds(), "查询SQL生成，入参【配置表IDS】为空");
-        CommonUtil.isNull(queryVO.getBase_table(), "查询SQL生成，入参【主表BASETABLE】为空");
-        List<QueryConfiguration> configList = queryConfigurationMapper.getQueryConfigByIds(queryVO.getConfigIds());
-        CommonUtil.isNull(configList, String.format("查询SQL生成，获取字段配置数据为空，IDS：%s", JSON.toJSONString(queryVO.getConfigIds())));
+    public String getQuerySql(List<QueryVO> queryVOList) {
+        if (CollectionUtils.isEmpty(queryVOList)){
+            throw new IllegalArgumentException("查询SQL生成, 入参为空");
+        }
+
         StringBuffer sql = new StringBuffer();
+
+        /**
+         * 1.别名处理
+         */
+        aliasHandle(queryVOList);
+
+        List<QueryConfiguration> queryFieldList = new ArrayList<>();
+        List<WhereVO> queryWhereList = new ArrayList<>();
+        queryVOList.forEach(e ->{
+            if (!CollectionUtils.isEmpty(e.getQueryFields())){
+                queryFieldList.addAll(e.getQueryFields());
+            }
+
+            if (!CollectionUtils.isEmpty(e.getWhereList())){
+                queryWhereList.addAll(e.getWhereList());
+            }
+        });
+
+        /**
+         * 2.查询字段处理
+         */
         sql.append("SELECT ");
         sql.append("\n");
-        for (QueryConfiguration field : configList) {
-            if (CommonUtil.isZero(field.getNum_id())){
-                sql.append(field.getQuery_field());
+        for (QueryConfiguration queryField : queryFieldList) {
+            if (CommonUtil.isZero(queryField.getNum_id())) {
+                sql.append(queryField.getQuery_field());
                 sql.append(" AS '");
-                sql.append(field.getField_comment());
+                sql.append(queryField.getField_comment());
                 sql.append("',");
                 sql.append("\n");
             } else {
-                List<QueryNum> numList = queryNumMapper.getQueryNumByNumId(field.getNum_id());
-                CommonUtil.isNull(numList, String.format("查询SQL生成，获取枚举表数据为空，枚举关联ID：%s，请配置枚举", field.getNum_id()));
+                List<QueryNum> numList = queryNumMapper.getQueryNumByNumId(queryField.getNum_id());
+                CommonUtil.isNull(numList, String.format("查询SQL生成，获取枚举表数据为空，枚举关联ID：%s，请配置枚举", queryField.getNum_id()));
                 sql.append("CASE ");
-                sql.append(field.getQuery_field());
+                sql.append(queryField.getQuery_field());
                 sql.append("\n");
                 for (QueryNum queryNum : numList) {
                     sql.append("WHEN '");
@@ -68,65 +91,109 @@ public class QuerySqlServiceImpl implements QuerySqlService {
                     sql.append("\n");
                 }
                 sql.append("END AS '");
-                sql.append(field.getField_comment());
+                sql.append(queryField.getField_comment());
                 sql.append("',");
                 sql.append("\n");
             }
-
-            if (!CommonUtil.isZero(field.getRelation_id())){
-                queryVO.getRelationIds().add(field.getRelation_id());
-            }
         }
+
+        /**
+         * 3.表关联处理
+         */
         sql.deleteCharAt(sql.length() - 2);
-        sql.append("FROM ");
-        sql.append(queryVO.getBase_table());
-        sql.append("\n");
-        if(!CommonUtil.isNull(queryVO.getRelationIds())){
-            List<QueryRelation> relationList = queryRelationMapper.getQueryRelationByIds(queryVO.getRelationIds());
-            CommonUtil.isNull(relationList, String.format("查询SQL生成，获取表关联配置数据为空，IDS：%s", JSON.toJSONString(queryVO.getRelationIds())));
-            for (QueryRelation relation : relationList) {
-                sql.append("INNER JOIN ");
-                sql.append(relation.getAssociation_table());
-                sql.append(" ON ");
-                sql.append(relation.getBase_field());
-                sql.append(" = ");
-                sql.append(relation.getAssociation_field());
-                sql.append("\n");
-            }
-        }
-        sql.append("WHERE 1=1");
-        sql.append("\n");
-        whereSqlhandle(sql, queryVO.getWhere());
-        sql.deleteCharAt(sql.length() - 1);
-        logger.info("查询SQL：\n" + sql.toString());
-        return sql.toString();
-    }
 
-    public static void whereSqlhandle(StringBuffer sql, List<WhereVO> whereList){
-       if (CommonUtil.isNull(whereList)){
-           return;
-       }
-        for (WhereVO whereVO : whereList) {
-            switch (whereVO.getOperator()){
-                case "IN":
-                    sql.append("AND " + whereVO.getField() + " IN('" + StringUtils.join(whereVO.getValue(), "', '") + "')");
+        for (QueryVO queryVO : queryVOList) {
+            switch (queryVO.getTableType()){
+                case "BASE":
+                    sql.append("FROM ");
+                    sql.append(queryVO.getQueryTable());
                     sql.append("\n");
                     break;
-                case "IS NULL":
-                case "IS NOT NULL":
-                    sql.append("AND " + whereVO.getField() + " " + whereVO.getOperator());
-                    sql.append("\n");
-                    break;
-                case "LIKE":
-                case "NOT LIKE":
-                    sql.append("AND " + whereVO.getField() + " " + whereVO.getOperator() + " '%" + whereVO.getValue() + "%'");
+                case "RELATION":
+                    sql.append("INNER JOIN ");
+                    sql.append(queryVO.getQueryRelation().getAssociation_table());
+                    sql.append(" ON ");
+                    sql.append(queryVO.getQueryRelation().getAssociation_field());
+                    sql.append(" = ");
+                    sql.append(queryVO.getQueryRelation().getBase_field());
                     sql.append("\n");
                     break;
                 default:
-                    sql.append("AND " + whereVO.getField() + " " + whereVO.getOperator() + " '" + whereVO.getValue() + "'");
-                    sql.append("\n");
                     break;
             }
         }
+
+        /**
+         * 4.查询条件处理
+         */
+        sql.append("WHERE 1=1");
+        sql.append("\n");
+
+
+        if (!CollectionUtils.isEmpty(queryWhereList)) {
+            for (WhereVO whereVO : queryWhereList) {
+                switch (whereVO.getOperator()) {
+                    case "IN":
+                        sql.append("AND " + whereVO.getField() + " IN('" + StringUtils.join(whereVO.getValue(), "', '") + "')");
+                        sql.append("\n");
+                        break;
+                    case "IS NULL":
+                    case "IS NOT NULL":
+                        sql.append("AND " + whereVO.getField() + " " + whereVO.getOperator());
+                        sql.append("\n");
+                        break;
+                    case "LIKE":
+                    case "NOT LIKE":
+                        sql.append("AND " + whereVO.getField() + " " + whereVO.getOperator() + " '%" + whereVO.getValue() + "%'");
+                        sql.append("\n");
+                        break;
+                    default:
+                        sql.append("AND " + whereVO.getField() + " " + whereVO.getOperator() + " '" + whereVO.getValue() + "'");
+                        sql.append("\n");
+                        break;
+                }
+            }
+        }
+
+        sql.deleteCharAt(sql.length() - 1);
+        logger.info("查询SQL：\n" + sql.toString());
+        return sql.toString();
+
+    }
+
+    private static void aliasHandle(List<QueryVO> queryVOList){
+        for (QueryVO vo : queryVOList) {
+            String queryAlias = vo.getTableType().equals("BASE") ? vo.getBaseAlias() : vo.getRelationAlias();
+            vo.setQueryTable(vo.getQueryTable() + " " + queryAlias);
+            if (!ObjectUtils.isEmpty(vo.getQueryRelation())){
+                vo.getQueryRelation().setBase_table(vo.getQueryRelation().getBase_table() + " " + vo.getBaseAlias());
+                vo.getQueryRelation().setBase_field(vo.getBaseAlias() + "." + vo.getQueryRelation().getBase_field());
+                vo.getQueryRelation().setAssociation_table(vo.getQueryRelation().getAssociation_table() + " " + vo.getRelationAlias());
+                vo.getQueryRelation().setAssociation_field(vo.getRelationAlias() + "." + vo.getQueryRelation().getAssociation_field());
+            }
+            if (!CollectionUtils.isEmpty(vo.getQueryFields())){
+                for (QueryConfiguration field : vo.getQueryFields()) {
+                    field.setQuery_table(field.getQuery_table() + " " + queryAlias);
+                    field.setQuery_field(queryAlias + "." + field.getQuery_field());
+                }
+            }
+            if (!CollectionUtils.isEmpty(vo.getWhereList())){
+                for (WhereVO whereVO : vo.getWhereList()) {
+                    whereVO.setField(queryAlias + "." + whereVO.getField());
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<QueryConfiguration> getQueryConfig(String table) {
+        Assert.isTrue(StringUtils.isNotBlank(table), "查询表字段配置信息，入参【table】为空");
+        return queryConfigurationMapper.getQueryConfigByTable(table);
+    }
+
+    @Override
+    public List<QueryRelation> getQueryRelation(String table) {
+        Assert.isTrue(StringUtils.isNotBlank(table), "查询表关联信息，入参【table】为空");
+        return queryRelationMapper.getQueryRelationByBaseTable(table);
     }
 }

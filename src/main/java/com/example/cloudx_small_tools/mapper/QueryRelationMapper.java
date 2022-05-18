@@ -14,7 +14,7 @@ import java.util.List;
 @Mapper
 public interface QueryRelationMapper {
 
-    List<QueryRelation> getQueryRelationById(@Param("id") Long id);
+    QueryRelation getQueryRelationById(@Param("id") Long id);
 
     List<QueryRelation> getQueryRelationByIds(@Param("ids") List<Long> ids);
 

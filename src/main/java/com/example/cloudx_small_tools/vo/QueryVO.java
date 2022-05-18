@@ -1,5 +1,8 @@
 package com.example.cloudx_small_tools.vo;
 
+import com.example.cloudx_small_tools.po.QueryConfiguration;
+import com.example.cloudx_small_tools.po.QueryRelation;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -12,40 +15,67 @@ public class QueryVO implements Serializable {
 
     private static final long serialVersionUID = -4271776627306209682L;
 
-    private List<Long> configIds;
-    private List<Long> relationIds;
-    private String base_table;
-    private List<WhereVO> where;
+    private String queryTable;
+    private String baseAlias;
+    private String relationAlias;
+    private List<QueryConfiguration> queryFields;
+    private QueryRelation queryRelation;
+    private List<WhereVO> WhereList;
+    private String tableType;
 
-    public List<Long> getConfigIds() {
-        return configIds;
+    public String getQueryTable() {
+        return queryTable;
     }
 
-    public void setConfigIds(List<Long> configIds) {
-        this.configIds = configIds;
+    public void setQueryTable(String queryTable) {
+        this.queryTable = queryTable;
     }
 
-    public List<Long> getRelationIds() {
-        return relationIds;
+    public String getBaseAlias() {
+        return baseAlias;
     }
 
-    public void setRelationIds(List<Long> relationIds) {
-        this.relationIds = relationIds;
+    public void setBaseAlias(String baseAlias) {
+        this.baseAlias = baseAlias;
     }
 
-    public String getBase_table() {
-        return base_table;
+    public String getRelationAlias() {
+        return relationAlias;
     }
 
-    public void setBase_table(String base_table) {
-        this.base_table = base_table;
+    public void setRelationAlias(String relationAlias) {
+        this.relationAlias = relationAlias;
     }
 
-    public List<WhereVO> getWhere() {
-        return where;
+    public List<QueryConfiguration> getQueryFields() {
+        return queryFields;
     }
 
-    public void setWhere(List<WhereVO> where) {
-        this.where = where;
+    public void setQueryFields(List<QueryConfiguration> queryFields) {
+        this.queryFields = queryFields;
+    }
+
+    public QueryRelation getQueryRelation() {
+        return queryRelation;
+    }
+
+    public void setQueryRelation(QueryRelation queryRelation) {
+        this.queryRelation = queryRelation;
+    }
+
+    public List<WhereVO> getWhereList() {
+        return WhereList;
+    }
+
+    public void setWhereList(List<WhereVO> whereList) {
+        WhereList = whereList;
+    }
+
+    public String getTableType() {
+        return tableType;
+    }
+
+    public void setTableType(String tableType) {
+        this.tableType = tableType;
     }
 }
